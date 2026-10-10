@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Salary Predictor</title>
+  <style>
+    /* ── Reset & base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+      background: #f0f4f8;
+      color: #1f2328;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 16px 60px;
+    }
+
+    /* ── Header ── */
+    header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #1f2328;
+      letter-spacing: -0.5px;
+    }
+    header p {
+      margin-top: 8px;
+      color: #57606a;
+      font-size: 0.95rem;
+    }
+
+    /* ── Card layout ── */
+    .card {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 32px;
+      width: 100%;
+      max-width: 760px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+    .card h2 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: #1f2328;
+    }
+
+    /* ── Slider input ── */
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .slider-wrap {
+      flex: 1;
+      min-width: 200px;
+    }
+    input[type="range"] {
+      width: 100%;
+      accent-color: #3b82d4;
+      cursor: pointer;
+      height: 6px;
+    }
+    .slider-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: #57606a;
+      margin-top: 4px;
+    }
+
+    .num-input-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .num-input-wrap label {
+      font-size: 0.75rem;
+      color: #57606a;
+    }
+    input[type="number"] {
+      width: 80px;
+      padding: 8px 10px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 1rem;
+      text-align: center;
+      outline: none;
+      transition: border-color .2s;
+    }
+    input[type="number"]:focus { border-color: #3b82d4; }
+
+    /* ── Predict button ── */
+    .btn-row {
+      margin-top: 24px;
+      text-align: center;
+    }
+    button#predictBtn {
+      background: #3b82d4;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 36px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s, transform .1s;
+    }
+    button#predictBtn:hover  { background: #2563c0; }
+    button#predictBtn:active { transform: scale(0.97); }
+
+    /* ── Result box ── */
+    #resultBox {
+      display: none;
+      background: #f0f7ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin-top: 24px;
+      text-align: center;
+    }
+    #resultBox .label {
+      font-size: 0.85rem;
+      color: #57606a;
+      margin-bottom: 6px;
+    }
+    #resultBox .salary {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: #3b82d4;
+    }
+    #resultBox .formula {
+      margin-top: 10px;
+      font-size: 0.8rem;
+      color: #57606a;
+    }
+
+    /* ── Stats bar ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 16px;
+    }
+    .stat-box {
+      background: #f7f8fa;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 14px 16px;
+      text-align: center;
+    }
+    .stat-box .s-val {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #1f2328;
+    }
+    .stat-box .s-lbl {
+      font-size: 0.75rem;
+      color: #57606a;
+      margin-top: 4px;
+    }
+
+    /* ── SVG Chart ── */
+    #chartWrap {
+      width: 100%;
+      overflow-x: auto;
+    }
+    svg#chart {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    /* ── Data table ── */
+    .tbl-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+    thead th {
+      background: #f7f8fa;
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid #e5e7eb;
+      color: #57606a;
+    }
+    tbody tr:nth-child(even) { background: #f7f8fa; }
+    tbody td {
+      padding: 9px 14px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    tbody tr:hover { background: #eff6ff; }
+
+    /* ── Footer ── */
+    footer {
+      margin-top: 40px;
+      font-size: 0.75rem;
+      color: #57606a;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>💼 Salary Predictor</h1>
+    <p>Linear regression model trained on 30 employee salary records</p>
+  </header>
+
+  <!-- Predictor Card -->
+  <div class="card">
+    <h2>Enter Years of Experience</h2>
+    <div class="slider-row">
+      <div class="slider-wrap">
+        <input type="range" id="expSlider" min="0" max="30" step="0.5" value="5" />
+        <div class="slider-labels"><span>0 yrs</span><span>15 yrs</span><span>30 yrs</span></div>
+      </div>
+      <div class="num-input-wrap">
+        <label for="expNum">Years</label>
+        <input type="number" id="expNum" min="0" max="30" step="0.5" value="5" />
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button id="predictBtn">Predict Salary</button>
+    </div>
+
+    <div id="resultBox">
+      <div class="label">Predicted Annual Salary</div>
+      <div class="salary" id="salaryOut">—</div>
+      <div class="formula" id="formulaOut"></div>
+    </div>
+  </div>
+
+  <!-- Model Stats Card -->
+  <div class="card">
+    <h2>Model Statistics</h2>
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="s-val">95.7%</div>
+        <div class="s-lbl">R² Score</div>
+      </div>
+      <div class="stat-box">
+        <div class="s-val">$9,450</div>
+        <div class="s-lbl">Salary / Year (slope)</div>
+      </div>
+      <div class="stat-box">
+        <div class="s-val">$25,792</div>
+        <div class="s-lbl">Base Salary (intercept)</div>
+      </div>
+      <div class="stat-box">
+        <div class="s-val">30</div>
+        <div class="s-lbl">Training Samples</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart Card -->
+  <div class="card">
+    <h2>Experience vs Salary</h2>
+    <div id="chartWrap">
+      <svg id="chart" viewBox="0 0 700 380" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+  </div>
+
+  <!-- Data Table Card -->
+  <div class="card">
+    <h2>Training Data</h2>
+    <div class="tbl-wrap">
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Years of Experience</th>
+            <th>Actual Salary (USD)</th>
+            <th>Predicted Salary (USD)</th>
+            <th>Residual (USD)</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>Made with IBM Bob</footer>
+
+<script>
+  /* ── Model coefficients (linear regression) ── */
+  const SLOPE     = 9449.962321;
+  const INTERCEPT = 25792.200199;
+
+  function predict(x) {
+    return SLOPE * x + INTERCEPT;
+  }
+
+  function fmt(n) {
+    return '$' + Math.round(n).toLocaleString('en-US');
+  }
+
+  /* ── Training data ── */
+  const DATA = [
+    [1.1,39343],[1.3,46205],[1.5,37731],[2.0,43525],[2.2,39891],
+    [2.9,56642],[3.0,60150],[3.2,54445],[3.2,64445],[3.7,57189],
+    [3.9,63218],[4.0,55794],[4.0,56957],[4.1,57081],[4.5,61111],
+    [4.9,67938],[5.1,66029],[5.3,83088],[5.9,81363],[6.0,93940],
+    [6.8,91738],[7.1,98273],[7.9,101302],[8.2,113812],[8.7,109431],
+    [9.0,105582],[9.5,116969],[9.6,112635],[10.3,122391],[10.5,121872]
+  ];
+
+  /* ── Sync slider ↔ number input ── */
+  const slider = document.getElementById('expSlider');
+  const numIn  = document.getElementById('expNum');
+
+  slider.addEventListener('input', () => {
+    numIn.value = slider.value;
+  });
+  numIn.addEventListener('input', () => {
+    let v = parseFloat(numIn.value);
+    if (isNaN(v)) return;
+    v = Math.min(30, Math.max(0, v));
+    slider.value = v;
+  });
+
+  /* ── Predict button ── */
+  document.getElementById('predictBtn').addEventListener('click', () => {
+    let yrs = parseFloat(numIn.value);
+    if (isNaN(yrs) || yrs < 0) { yrs = 0; }
+    if (yrs > 30) { yrs = 30; numIn.value = 30; slider.value = 30; }
+
+    const salary = predict(yrs);
+    document.getElementById('salaryOut').textContent = fmt(salary);
+    document.getElementById('formulaOut').textContent =
+      `${fmt(SLOPE)} × ${yrs} yrs  +  ${fmt(INTERCEPT)}  =  ${fmt(salary)}`;
+
+    const box = document.getElementById('resultBox');
+    box.style.display = 'block';
+
+    // update chart marker
+    drawChart(yrs, salary);
+  });
+
+  /* ─────────────────────────────────────────────
+     SVG CHART
+  ───────────────────────────────────────────── */
+  const PAD = { top: 24, right: 30, bottom: 48, left: 74 };
+  const W = 700, H = 380;
+  const CW = W - PAD.left - PAD.right;
+  const CH = H - PAD.top  - PAD.bottom;
+
+  const X_MIN = 0,  X_MAX = 30;
+  const Y_MIN = 0,  Y_MAX = 310000;
+
+  function sx(x) { return PAD.left + (x - X_MIN) / (X_MAX - X_MIN) * CW; }
+  function sy(y) { return PAD.top  + (1 - (y - Y_MIN) / (Y_MAX - Y_MIN)) * CH; }
+
+  function svgEl(tag, attrs = {}) {
+    const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+    return el;
+  }
+
+  function drawChart(predX = null, predY = null) {
+    const svg = document.getElementById('chart');
+    svg.innerHTML = '';
+
+    // background
+    svg.appendChild(svgEl('rect', { x:0, y:0, width:W, height:H, fill:'#ffffff' }));
+
+    // grid lines & Y axis labels
+    const yTicks = [0, 50000, 100000, 150000, 200000, 250000, 300000];
+    yTicks.forEach(yv => {
+      const y = sy(yv);
+      svg.appendChild(svgEl('line', {
+        x1: PAD.left, y1: y, x2: PAD.left + CW, y2: y,
+        stroke: '#e5e7eb', 'stroke-width': 1
+      }));
+      const lbl = svgEl('text', {
+        x: PAD.left - 8, y: y + 4,
+        'text-anchor': 'end', 'font-size': '11', fill: '#57606a'
+      });
+      lbl.textContent = yv === 0 ? '$0' : '$' + (yv/1000) + 'k';
+      svg.appendChild(lbl);
+    });
+
+    // X axis labels
+    for (let xv = 0; xv <= 30; xv += 5) {
+      const x = sx(xv);
+      svg.appendChild(svgEl('line', {
+        x1: x, y1: PAD.top, x2: x, y2: PAD.top + CH,
+        stroke: '#e5e7eb', 'stroke-width': 1, 'stroke-dasharray': '4 3'
+      }));
+      const lbl = svgEl('text', {
+        x, y: PAD.top + CH + 18,
+        'text-anchor': 'middle', 'font-size': '11', fill: '#57606a'
+      });
+      lbl.textContent = xv + ' yr' + (xv !== 1 ? 's' : '');
+      svg.appendChild(lbl);
+    }
+
+    // Axes
+    svg.appendChild(svgEl('line', {
+      x1: PAD.left, y1: PAD.top + CH, x2: PAD.left + CW, y2: PAD.top + CH,
+      stroke: '#adb5bd', 'stroke-width': 1.5
+    }));
+    svg.appendChild(svgEl('line', {
+      x1: PAD.left, y1: PAD.top, x2: PAD.left, y2: PAD.top + CH,
+      stroke: '#adb5bd', 'stroke-width': 1.5
+    }));
+
+    // Axis titles
+    const xTitle = svgEl('text', {
+      x: PAD.left + CW / 2, y: H - 6,
+      'text-anchor': 'middle', 'font-size': '12', fill: '#1f2328', 'font-weight': '600'
+    });
+    xTitle.textContent = 'Years of Experience';
+    svg.appendChild(xTitle);
+
+    const yTitle = svgEl('text', {
+      x: 0, y: 0,
+      'text-anchor': 'middle', 'font-size': '12', fill: '#1f2328', 'font-weight': '600',
+      transform: `rotate(-90) translate(${-(PAD.top + CH/2)}, 14)`
+    });
+    yTitle.textContent = 'Salary (USD)';
+    svg.appendChild(yTitle);
+
+    // Regression line
+    const x0 = sx(X_MIN), y0 = sy(predict(X_MIN));
+    const x1 = sx(30),    y1 = sy(predict(30));
+    svg.appendChild(svgEl('line', {
+      x1: x0, y1: y0, x2: x1, y2: y1,
+      stroke: '#3b82d4', 'stroke-width': 2, 'stroke-dasharray': '6 3', opacity: 0.85
+    }));
+
+    // Confidence band (±1 std dev residual ≈ $8 500)
+    const band_pts_top = [];
+    const band_pts_bot = [];
+    for (let xv = X_MIN; xv <= 30; xv += 0.5) {
+      band_pts_top.push(`${sx(xv)},${sy(predict(xv) + 8500)}`);
+      band_pts_bot.push(`${sx(xv)},${sy(predict(xv) - 8500)}`);
+    }
+    const bandPath = svgEl('polygon', {
+      points: [...band_pts_top, ...[...band_pts_bot].reverse()].join(' '),
+      fill: '#3b82d4', opacity: 0.08
+    });
+    svg.appendChild(bandPath);
+
+    // Scatter points
+    DATA.forEach(([xv, yv]) => {
+      const circle = svgEl('circle', {
+        cx: sx(xv), cy: sy(yv), r: 5,
+        fill: '#3b82d4', stroke: '#fff', 'stroke-width': 1.5, opacity: 0.85
+      });
+      const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+      title.textContent = `${xv} yrs → ${fmt(yv)}`;
+      circle.appendChild(title);
+      svg.appendChild(circle);
+    });
+
+    // Prediction marker
+    if (predX !== null) {
+      const px = sx(predX), py = sy(predY);
+
+      // vertical dashed drop line
+      svg.appendChild(svgEl('line', {
+        x1: px, y1: py, x2: px, y2: PAD.top + CH,
+        stroke: '#e04c4c', 'stroke-width': 1.5, 'stroke-dasharray': '4 3'
+      }));
+      // horizontal dashed line to Y axis
+      svg.appendChild(svgEl('line', {
+        x1: PAD.left, y1: py, x2: px, y2: py,
+        stroke: '#e04c4c', 'stroke-width': 1.5, 'stroke-dasharray': '4 3'
+      }));
+
+      // marker dot
+      svg.appendChild(svgEl('circle', {
+        cx: px, cy: py, r: 8,
+        fill: '#e04c4c', stroke: '#fff', 'stroke-width': 2
+      }));
+
+      // annotation label
+      const labelX = px + 10 > PAD.left + CW - 90 ? px - 100 : px + 10;
+      const labelY = py - 10 < PAD.top + 20 ? py + 28 : py - 10;
+
+      const rect = svgEl('rect', {
+        x: labelX - 4, y: labelY - 16, width: 108, height: 22,
+        rx: 4, fill: '#e04c4c', opacity: 0.9
+      });
+      svg.appendChild(rect);
+
+      const ann = svgEl('text', {
+        x: labelX + 50, y: labelY,
+        'text-anchor': 'middle', 'font-size': '11', fill: '#fff', 'font-weight': '600'
+      });
+      ann.textContent = `${predX} yrs → ${fmt(predY)}`;
+      svg.appendChild(ann);
+    }
+
+    // Legend
+    const lgX = PAD.left + 12, lgY = PAD.top + 12;
+    svg.appendChild(svgEl('circle', { cx: lgX + 5, cy: lgY + 5, r: 5, fill: '#3b82d4', stroke: '#fff', 'stroke-width': 1.5 }));
+    const lg1 = svgEl('text', { x: lgX + 15, y: lgY + 9, 'font-size': '11', fill: '#57606a' });
+    lg1.textContent = 'Actual data';
+    svg.appendChild(lg1);
+
+    svg.appendChild(svgEl('line', {
+      x1: lgX + 80, y1: lgY + 5, x2: lgX + 100, y2: lgY + 5,
+      stroke: '#3b82d4', 'stroke-width': 2, 'stroke-dasharray': '5 2'
+    }));
+    const lg2 = svgEl('text', { x: lgX + 105, y: lgY + 9, 'font-size': '11', fill: '#57606a' });
+    lg2.textContent = 'Regression line';
+    svg.appendChild(lg2);
+
+    if (predX !== null) {
+      svg.appendChild(svgEl('circle', { cx: lgX + 195, cy: lgY + 5, r: 7, fill: '#e04c4c', stroke: '#fff', 'stroke-width': 1.5 }));
+      const lg3 = svgEl('text', { x: lgX + 207, y: lgY + 9, 'font-size': '11', fill: '#57606a' });
+      lg3.textContent = 'Your prediction';
+      svg.appendChild(lg3);
+    }
+  }
+
+  /* ── Build data table ── */
+  function buildTable() {
+    const tbody = document.getElementById('tableBody');
+    DATA.forEach(([x, y], i) => {
+      const pred = predict(x);
+      const resid = y - pred;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${i + 1}</td>
+        <td>${x}</td>
+        <td>${fmt(y)}</td>
+        <td>${fmt(pred)}</td>
+        <td style="color:${resid >= 0 ? '#1a7a4a' : '#c0392b'}">${resid >= 0 ? '+' : ''}${fmt(resid)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  /* ── Init ── */
+  drawChart();
+  buildTable();
+</script>
+</body>
+</html>
